@@ -1,98 +1,63 @@
-/* General Reset */
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Sidebar styles */
+/* Sidebar */
 .side-bar {
+    width: 220px;
+    background-color: #f8f9fa;
+    padding: 20px;
     position: fixed;
     top: 0;
     left: 0;
-    width: 220px;
-    height: 100%;
-    background-color: #f8f9fa;
-    padding: 20px 10px;
-    border-right: 1px solid #ddd;
-    transition: transform 0.3s ease;
+    height: 100vh;
+    overflow-y: auto;
     z-index: 1000;
+    transition: transform 0.3s ease-in-out;
 }
 
 .side-bar.active {
-    transform: translateX(-220px);
+    transform: translateX(-100%);
 }
 
-/* Toggle Button */
+/* Main content shifts right when sidebar is open */
+@media (min-width: 768px) {
+    #main-content {
+        margin-left: 240px;
+    }
+}
+
+/* Button */
 .button {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background-color: #007bff;
+    margin: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #0d6efd;
     color: white;
     border: none;
-    padding: 8px 12px;
-    font-size: 18px;
     border-radius: 6px;
-    cursor: pointer;
-    z-index: 1100;
 }
 
-/* Adjust layout for main content */
-#main-content {
-    padding-top: 20px;
-}
-
-#plots-container {
-    margin-top: 20px;
-}
-
-/* NavLink and Button */
-.nav-link.active {
-    font-weight: bold;
-    background-color: #007bff;
-    color: white !important;
-    border-radius: 5px;
-}
-
-.train-model-button {
-    background-color: #28a745;
-    border: none;
-    color: white;
-    padding: 10px 16px;
-    width: 100%;
-    margin-top: 20px;
-    font-weight: 600;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* Responsive layout */
-@media screen and (max-width: 768px) {
+/* Mobile adjustments */
+@media (max-width: 767px) {
     .side-bar {
-        transform: translateX(-220px);
-    }
-
-    .side-bar.active {
-        transform: translateX(0);
-    }
-
-    #main-content,
-    #plots-container {
-        margin-left: 0;
-        padding: 10px;
+        position: absolute;
+        width: 100%;
+        height: auto;
     }
 
     .button {
-        left: 10px;
+        width: 100%;
+    }
+
+    #main-content {
+        margin-left: 0;
+        padding: 10px;
     }
 }
 
-/* Loading spinner */
-.dash-spinner {
-    margin-top: 40px;
+/* Tab styling */
+.tab-content {
+    margin-top: 20px;
 }
 
-/* Typography */
-h4, h5, p {
-    color: #343a40;
+/* Text alignment */
+.text-center {
+    text-align: center;
 }
