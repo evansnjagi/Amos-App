@@ -1,0 +1,91 @@
+/* Sidebar toggle button (☰) */
+.button {
+    margin-top: 30px;
+    margin-left: 180px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: transparent;
+    padding: 8px;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+    z-index: 1001;
+    position: relative;
+}
+
+/* Main sidebar style */
+.side-bar {
+    width: 220px;
+    background: #f0f0f0;
+    padding: 10px;
+    height: 100vh;
+    float: left;
+    position: fixed;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+/* Hidden sidebar on small screens */
+@media screen and (max-width: 768px) {
+    .side-bar {
+        transform: translateX(-100%);
+    }
+
+    .side-bar.active {
+        transform: translateX(0);
+    }
+
+    .button {
+        margin-left: 10px;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background-color: #ddd;
+        border-radius: 4px;
+        z-index: 1002;
+    }
+}
+
+/* Buttons */
+.train-model-button {
+    background-color: azure;
+    color: black;
+    margin-left: 25px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    height: 36px;
+    width: 140px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.35s ease, background-color 0.3s ease;
+}
+
+.train-model-button:hover {
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+    background-color: #e0ffff;
+}
+
+.train-model-button:active {
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4);
+    background-color: #d0f0f0;
+}
+
+/* Tables */
+.table, .text-table {
+    margin: auto;
+    border-collapse: collapse;
+    width: 80%;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.metrics {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 30px;
+}
