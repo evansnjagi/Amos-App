@@ -18,17 +18,17 @@ def create_layout():
             html.H4("Amos House Price App", style={"textAlign": "center"}),
             html.Hr(),
             dbc.Nav([
-                dbc.Button("Home", id="btn-home", className="mb-2", color="primary", block=True),
-                dbc.Button("Learning Curves", id="btn-lc", className="mb-2", color="primary", block=True),
-                dbc.Button("Feature Importance", id="btn-fi", className="mb-2", color="primary", block=True),
-                dbc.Button("Predictions", id="btn-predictions", className="mb-2", color="primary", block=True),
-                dbc.Button("Residuals", id="btn-residual", className="mb-2", color="primary", block=True),
-                dbc.Button("Know More", id="btn-about", className="mb-2", color="primary", block=True)
+                dbc.Button("Home", id="btn-home", className="mb-2 w-100", color="primary"),
+                dbc.Button("Learning Curves", id="btn-lc", className="mb-2 w-100", color="primary"),
+                dbc.Button("Feature Importance", id="btn-fi", className="mb-2 w-100", color="primary"),
+                dbc.Button("Predictions", id="btn-predictions", className="mb-2 w-100", color="primary"),
+                dbc.Button("Residuals", id="btn-residual", className="mb-2 w-100", color="primary"),
+                dbc.Button("Know More", id="btn-about", className="mb-2 w-100", color="primary")
             ], vertical=True),
             html.Br(),
             html.Div([
                 dbc.Input(id="id-label", placeholder="Enter label for submission file", type="text"),
-                dbc.Button("Generate Submission", id="download-button", color="success", className="mt-2", block=True),
+                dbc.Button("Generate Submission", id="download-button", color="success", className="mt-2 w-100"),
                 dcc.Download(id="download-component"),
                 html.Div(id="download-message", className="text-success mt-2")
             ])
@@ -42,7 +42,7 @@ def create_layout():
                 children=html.Div(id="plots-container"),
                 fullscreen=False
             )
-        ], style={"marginLeft": "230px", "padding": "10px"})
+        ], className="main-content")
     ])
 
 # Set app layout
@@ -157,6 +157,3 @@ def download_submission(n, label):
         raise PreventUpdate
     df = MapId().get_id(label)
     return dcc.send_data_frame(df.to_csv, filename=f"{label}_submission.csv"), "Your CSV file is ready. Click the download button again to save."
-
-if __name__ == "__main__":
-    app.run_server(debug=True)
