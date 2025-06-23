@@ -4,4 +4,3 @@ pandas==2.2.2
 scikit-learn==1.4.2
 plotly==5.22.0
 numpy==1.26.4
-openpyxl==3.1.2     # If you read/write Excel files
