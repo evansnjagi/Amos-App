@@ -1,151 +1,123 @@
 import dash
-from dash import html, dcc, Input, Output, State, ctx, callback
-from dash.exceptions import PreventUpdate
+from dash import dcc, html, Input, Output, State, ctx, dash_table
 import dash_bootstrap_components as dbc
-
+import pandas as pd
 from Business import GraphBuilder, MapId
 
-# Build the Dash app
+# Initialize Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title = "Amos House Price Dashboard"
+server = app.server  # Required for Render
 
-app.layout = html.Div([
-    # Sidebar toggle button
-    html.Button("\u2630", className="button", id="toggle"),
+app.title = "Amos House App"
 
-    # Sidebar
-    html.Div([
-        html.H4("Select Plot", style={"marginBottom": "20px"}),
-        dcc.Dropdown(
-            id="plot-dropdown",
-            options=[
-                {"label": "📊 House Sale Price Histogram", "value": "hist"},
-                {"label": "📈 PCA vs SalePrice", "value": "pca"},
-                {"label": "📉 Learning Curve - Linear", "value": "lc-linear"},
-                {"label": "🌲 Learning Curve - Tree", "value": "lc-tree"},
-                {"label": "🌳 Learning Curve - Forest", "value": "lc-forest"},
-                {"label": "🚀 Learning Curve - Gradient", "value": "lc-gradient"},
-                {"label": "🟠 Scatter: Linear", "value": "scatter-linear"},
-                {"label": "🔵 Scatter: Tree", "value": "scatter-tree"},
-                {"label": "🟢 Scatter: Forest", "value": "scatter-forest"},
-                {"label": "🟣 Scatter: Gradient", "value": "scatter-gradient"},
-                {"label": "📉 Residuals: Linear", "value": "resid-linear"},
-                {"label": "📉 Residuals: Tree", "value": "resid-tree"},
-                {"label": "📉 Residuals: Forest", "value": "resid-forest"},
-                {"label": "📉 Residuals: Gradient", "value": "resid-gradient"},
-                {"label": "🔥 Feature Importances: Linear", "value": "feat-linear"},
-                {"label": "🔥 Feature Importances: Tree", "value": "feat-tree"},
-                {"label": "🔥 Feature Importances: Forest", "value": "feat-forest"},
-                {"label": "🔥 Feature Importances: Gradient", "value": "feat-gradient"},
-            ],
-            placeholder="Select a visualization...",
-            style={"marginBottom": "30px"}
-        ),
+# Layout
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col([
+            html.Button("\u2630", className="btn btn-outline-secondary", id="sidebar-toggle", n_clicks=0),
+            html.Div([
+                html.H2("AmosApp", className="text-center my-3"),
+                dbc.Button("House Price Histogram", id="hist-btn", color="primary", className="mb-2 w-100"),
+                dbc.Button("PCA Plot", id="pca-btn", color="secondary", className="mb-2 w-100"),
+                dbc.Button("Learning Curve", id="lc-btn", color="success", className="mb-2 w-100"),
+                dbc.Button("Feature Importance", id="fi-btn", color="info", className="mb-2 w-100"),
+                dcc.Dropdown(
+                    id="model-dropdown",
+                    options=[
+                        {"label": "Linear", "value": "linear"},
+                        {"label": "Tree", "value": "tree"},
+                        {"label": "Forest", "value": "forest"},
+                        {"label": "Gradient", "value": "gradient"},
+                    ],
+                    value="linear",
+                    placeholder="Select model type...",
+                    className="mb-2"
+                ),
+                dbc.Input(id="label-input", type="text", placeholder="Submission Label", className="mb-2"),
+                dbc.Button("Generate Predictions", id="predict-btn", color="dark", className="mb-2 w-100"),
+                dbc.Button("Download Submission", id="download-btn", color="danger", className="mb-2 w-100"),
+                dcc.Download(id="download-link")
+            ], id="sidebar", className="d-grid")
+        ], width=12, md=3),
 
-        html.H4("Map ID for Submission"),
-        dcc.Input(id="input-label", type="text", placeholder="Enter submission label...", style={"marginBottom": "10px", "width": "100%"}),
-        html.Button("Download Submission", id="submit-btn", className="train-model-button"),
-        html.Div(id="download-text", style={"marginTop": "15px", "fontSize": "14px", "color": "green"})
-
-    ], className="side-bar", id="sidebar"),
-
-    # Main panel
-    html.Div([
-        html.Div("\ud83d\udcf1 Swipe left/right to view full plot", style={"fontSize": "14px", "color": "#888"}),
-
-        dcc.Loading(
-            id="loading-graph",
-            type="circle",
-            children=html.Div(
-                dcc.Graph(id="main-graph"),
-                className="responsive-plot-container"
+        dbc.Col([
+            html.H4("Amos House Price Dashboard", className="text-center mt-3"),
+            dcc.Loading(
+                id="plot-loading",
+                type="circle",
+                children=html.Div(dcc.Graph(id="plot-area", config={"responsive": True}), className="p-2")
+            ),
+            dbc.Toast(
+                "Prediction file saved. Ready to download!",
+                id="toast",
+                header="Success",
+                is_open=False,
+                dismissable=True,
+                icon="success",
+                duration=4000,
+                style={"position": "fixed", "top": 10, "right": 10, "width": 350}
             )
-        )
-    ], style={"marginLeft": "240px", "padding": "20px"})
-])
+        ], width=12, md=9)
+    ])
+], fluid=True)
 
-# Sidebar toggle callback
-@callback(
-    Output("sidebar", "className"),
-    [Input("toggle", "n_clicks")],
-    [State("sidebar", "className")]
+# Store predictions temporarily
+predicted_submissions = {}
+
+@app.callback(
+    Output("plot-area", "figure"),
+    Input("hist-btn", "n_clicks"),
+    Input("pca-btn", "n_clicks"),
+    Input("lc-btn", "n_clicks"),
+    Input("fi-btn", "n_clicks"),
+    State("model-dropdown", "value")
 )
-def toggle_sidebar(n, current):
-    if not n:
-        raise PreventUpdate
-    if "active" in current:
-        return "side-bar"
-    return "side-bar active"
-
-# Main graph callback
-@callback(
-    Output("main-graph", "figure"),
-    [Input("plot-dropdown", "value")]
-)
-def update_graph(plot_type):
-    if not plot_type:
-        raise PreventUpdate
-
+def update_plot(n1, n2, n3, n4, model_type):
+    button_id = ctx.triggered_id
     gb = GraphBuilder()
-
-    if plot_type == "hist":
+    if button_id == "hist-btn":
         return gb.house_price_hist()
-    elif plot_type == "pca":
+    elif button_id == "pca-btn":
         return gb.pca_plot()
-    elif plot_type == "lc-linear":
-        return gb.learning_curve_linear()
-    elif plot_type == "lc-tree":
-        return gb.learning_curve_tree()
-    elif plot_type == "lc-forest":
-        return gb.learning_curve_forest()
-    elif plot_type == "lc-gradient":
-        return gb.learning_curve_gradient()
-    elif plot_type == "scatter-linear":
-        return gb.scatter_plot("linear")
-    elif plot_type == "scatter-tree":
-        return gb.scatter_plot("tree")
-    elif plot_type == "scatter-forest":
-        return gb.scatter_plot("forest")
-    elif plot_type == "scatter-gradient":
-        return gb.scatter_plot("gradient")
-    elif plot_type == "resid-linear":
-        return gb.residual_plot()
-    elif plot_type == "resid-tree":
-        _, fig = gb.residual_tree_plot("tree")
-        return fig
-    elif plot_type == "resid-forest":
-        _, fig = gb.residual_tree_plot("forest")
-        return fig
-    elif plot_type == "resid-gradient":
-        _, fig = gb.residual_tree_plot("gradient")
-        return fig
-    elif plot_type == "feat-linear":
-        return gb.feature_importance("linear")
-    elif plot_type == "feat-tree":
-        return gb.feature_importance("tree")
-    elif plot_type == "feat-forest":
-        return gb.feature_importance("forest")
-    elif plot_type == "feat-gradient":
-        return gb.feature_importance("gradient")
+    elif button_id == "lc-btn":
+        if model_type == "linear":
+            return gb.learning_curve_linear()
+        elif model_type == "tree":
+            return gb.learning_curve_tree()
+        elif model_type == "forest":
+            return gb.learning_curve_forest()
+        else:
+            return gb.learning_curve_gradient()
+    elif button_id == "fi-btn":
+        return gb.feature_importance(model_type)
+    return dash.no_update
 
-    raise PreventUpdate
-
-# Submission ID mapping
-@callback(
-    Output("download-text", "children"),
-    [Input("submit-btn", "n_clicks")],
-    [State("input-label", "value")]
+@app.callback(
+    Output("label-input", "value"),
+    Output("toast", "is_open"),
+    Input("predict-btn", "n_clicks"),
+    State("label-input", "value"),
+    State("model-dropdown", "value"),
+    prevent_initial_call=True
 )
-def submit_id(n, label):
-    if not n:
-        raise PreventUpdate
+def store_predictions(n_clicks, label, model_type):
     if not label:
-        return "Please enter a label."
-    try:
-        MapId().get_id(label)
-        return f"✅ '{label}_submission.csv' downloaded successfully!"
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
+        return "", False
+    df = MapId().get_id(label)
+    predicted_submissions[label] = df
+    return label, True
+
+@app.callback(
+    Output("download-link", "data"),
+    Input("download-btn", "n_clicks"),
+    State("label-input", "value"),
+    prevent_initial_call=True
+)
+def download_csv(n_clicks, label):
+    if label in predicted_submissions:
+        df = predicted_submissions[label]
+        return dcc.send_data_frame(df.to_csv, f"{label}_submission.csv")
+    return dash.no_update
 
 if __name__ == "__main__":
     app.run_server(debug=True)
