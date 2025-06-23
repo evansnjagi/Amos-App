@@ -1,122 +1,98 @@
-/* === GLOBAL SETTINGS === */
+/* General Reset */
 body {
     margin: 0;
-    font-family: "Segoe UI", sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* === SIDEBAR === */
+/* Sidebar styles */
 .side-bar {
-    width: 220px;
-    background: #f0f0f0;
-    padding: 10px;
-    height: 100vh;
     position: fixed;
-    left: 0;
     top: 0;
+    left: 0;
+    width: 220px;
+    height: 100%;
+    background-color: #f8f9fa;
+    padding: 20px 10px;
+    border-right: 1px solid #ddd;
     transition: transform 0.3s ease;
     z-index: 1000;
-    overflow-y: auto;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
+.side-bar.active {
+    transform: translateX(-220px);
+}
+
+/* Toggle Button */
+.button {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 1100;
+}
+
+/* Adjust layout for main content */
+#main-content {
+    padding-top: 20px;
+}
+
+#plots-container {
+    margin-top: 20px;
+}
+
+/* NavLink and Button */
+.nav-link.active {
+    font-weight: bold;
+    background-color: #007bff;
+    color: white !important;
+    border-radius: 5px;
+}
+
+.train-model-button {
+    background-color: #28a745;
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    width: 100%;
+    margin-top: 20px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Responsive layout */
 @media screen and (max-width: 768px) {
     .side-bar {
-        transform: translateX(-100%);
+        transform: translateX(-220px);
     }
 
     .side-bar.active {
         transform: translateX(0);
     }
-}
 
-/* === SIDEBAR TOGGLE BUTTON === */
-.button {
-    margin: 10px;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1100;
-    background-color: #e0e0e0;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: 0px 2px 4px rgba(0,0,0,0.2);
-}
-
-/* === MODEL BUTTONS === */
-.train-model-button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    margin: 10px auto;
-    border-radius: 8px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.25s ease;
-}
-
-.train-model-button:hover {
-    background-color: #0056b3;
-}
-
-/* === TABLES === */
-.table, .text-table {
-    margin: 20px auto;
-    width: 90%;
-    border-collapse: collapse;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    text-align: center;
-}
-
-.table th, .table td {
-    padding: 10px;
-}
-
-/* === PLOT CONTAINER === */
-.plot-container {
-    margin-left: 240px;
-    padding: 20px;
-}
-
-@media screen and (max-width: 768px) {
-    .plot-container {
+    #main-content,
+    #plots-container {
         margin-left: 0;
         padding: 10px;
     }
 
-    .plot-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .button {
+        left: 10px;
     }
 }
 
-/* === TOAST NOTIFICATIONS === */
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    min-width: 200px;
-    z-index: 2000;
+/* Loading spinner */
+.dash-spinner {
+    margin-top: 40px;
 }
 
-.toast-message {
-    background-color: #28a745;
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* === SPINNER CENTERING === */
-.loading-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 30px 0;
+/* Typography */
+h4, h5, p {
+    color: #343a40;
 }
