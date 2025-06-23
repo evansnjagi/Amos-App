@@ -1,123 +1,176 @@
 import dash
-from dash import dcc, html, Input, Output, State, ctx, dash_table
 import dash_bootstrap_components as dbc
-import pandas as pd
+from dash import dcc, html, Input, Output, State, ctx, callback_context
 from Business import GraphBuilder, MapId
+import pandas as pd
+import plotly.graph_objects as go
+from dash.exceptions import PreventUpdate
 
-# Initialize Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server  # Required for Render
+server = app.server
 
-app.title = "Amos House App"
+# Layout definition
+def create_layout():
+    return html.Div([
+        # Sidebar toggle button
+        html.Button("☰", className="button", id="toggle-sidebar"),
 
-# Layout
-app.layout = dbc.Container([
-    dbc.Row([
-        dbc.Col([
-            html.Button("\u2630", className="btn btn-outline-secondary", id="sidebar-toggle", n_clicks=0),
-            html.Div([
-                html.H2("AmosApp", className="text-center my-3"),
-                dbc.Button("House Price Histogram", id="hist-btn", color="primary", className="mb-2 w-100"),
-                dbc.Button("PCA Plot", id="pca-btn", color="secondary", className="mb-2 w-100"),
-                dbc.Button("Learning Curve", id="lc-btn", color="success", className="mb-2 w-100"),
-                dbc.Button("Feature Importance", id="fi-btn", color="info", className="mb-2 w-100"),
-                dcc.Dropdown(
-                    id="model-dropdown",
-                    options=[
-                        {"label": "Linear", "value": "linear"},
-                        {"label": "Tree", "value": "tree"},
-                        {"label": "Forest", "value": "forest"},
-                        {"label": "Gradient", "value": "gradient"},
-                    ],
-                    value="linear",
-                    placeholder="Select model type...",
-                    className="mb-2"
-                ),
-                dbc.Input(id="label-input", type="text", placeholder="Submission Label", className="mb-2"),
-                dbc.Button("Generate Predictions", id="predict-btn", color="dark", className="mb-2 w-100"),
-                dbc.Button("Download Submission", id="download-btn", color="danger", className="mb-2 w-100"),
-                dcc.Download(id="download-link")
-            ], id="sidebar", className="d-grid")
-        ], width=12, md=3),
+        # Sidebar
+        html.Div([
+            html.H4("📊 Amos House Price App", style={"textAlign": "center"}),
+            html.Hr(),
+            dbc.Nav([
+                dbc.NavLink("🏠 Home", href="#", id="link-home"),
+                dbc.NavLink("📈 Learning Curves", href="#", id="link-lc"),
+                dbc.NavLink("📉 Feature Importance", href="#", id="link-fi"),
+                dbc.NavLink("📋 Know More", href="#", id="link-about")
+            ], vertical=True, pills=True),
+            html.Br(),
+            dbc.Button("Download Submission", id="download-button", className="train-model-button"),
+            dcc.Download(id="download-component")
+        ], className="side-bar", id="sidebar"),
 
-        dbc.Col([
-            html.H4("Amos House Price Dashboard", className="text-center mt-3"),
+        # Main content
+        html.Div([
+            html.Div(id="main-content"),
             dcc.Loading(
-                id="plot-loading",
+                id="loading-output",
                 type="circle",
-                children=html.Div(dcc.Graph(id="plot-area", config={"responsive": True}), className="p-2")
-            ),
-            dbc.Toast(
-                "Prediction file saved. Ready to download!",
-                id="toast",
-                header="Success",
-                is_open=False,
-                dismissable=True,
-                icon="success",
-                duration=4000,
-                style={"position": "fixed", "top": 10, "right": 10, "width": 350}
+                children=html.Div(id="plots-container")
             )
-        ], width=12, md=9)
+        ], style={"marginLeft": "230px", "padding": "20px"})
     ])
-], fluid=True)
 
-# Store predictions temporarily
-predicted_submissions = {}
+# Set app layout
+app.layout = create_layout
 
+# Sidebar toggle functionality
 @app.callback(
-    Output("plot-area", "figure"),
-    Input("hist-btn", "n_clicks"),
-    Input("pca-btn", "n_clicks"),
-    Input("lc-btn", "n_clicks"),
-    Input("fi-btn", "n_clicks"),
-    State("model-dropdown", "value")
+    Output("sidebar", "className"),
+    [Input("toggle-sidebar", "n_clicks")],
+    [State("sidebar", "className")]
 )
-def update_plot(n1, n2, n3, n4, model_type):
-    button_id = ctx.triggered_id
-    gb = GraphBuilder()
-    if button_id == "hist-btn":
-        return gb.house_price_hist()
-    elif button_id == "pca-btn":
-        return gb.pca_plot()
-    elif button_id == "lc-btn":
-        if model_type == "linear":
-            return gb.learning_curve_linear()
-        elif model_type == "tree":
-            return gb.learning_curve_tree()
-        elif model_type == "forest":
-            return gb.learning_curve_forest()
+def toggle_sidebar(n, className):
+    if n:
+        if "active" in className:
+            return "side-bar"
         else:
-            return gb.learning_curve_gradient()
-    elif button_id == "fi-btn":
-        return gb.feature_importance(model_type)
-    return dash.no_update
+            return "side-bar active"
+    return className
 
+# Routing buttons to plots
 @app.callback(
-    Output("label-input", "value"),
-    Output("toast", "is_open"),
-    Input("predict-btn", "n_clicks"),
-    State("label-input", "value"),
-    State("model-dropdown", "value"),
-    prevent_initial_call=True
+    Output("plots-container", "children"),
+    [Input("link-home", "n_clicks"),
+     Input("link-lc", "n_clicks"),
+     Input("link-fi", "n_clicks"),
+     Input("link-about", "n_clicks")]
 )
-def store_predictions(n_clicks, label, model_type):
-    if not label:
-        return "", False
-    df = MapId().get_id(label)
-    predicted_submissions[label] = df
-    return label, True
+def render_content(home, lc, fi, about):
+    triggered = ctx.triggered_id
 
+    if triggered == "link-home":
+        return html.Div([
+            dbc.Row([
+                dbc.Col(dcc.Graph(figure=GraphBuilder().house_price_hist()), width=12)
+            ]),
+            dbc.Row([
+                dbc.Col(dcc.Graph(figure=GraphBuilder().pca_plot()), width=12)
+            ])
+        ])
+
+    elif triggered == "link-lc":
+        return html.Div([
+            html.H5("Training and Validation Learning Curves", className="text-center mb-4"),
+            dbc.Tabs([
+                dbc.Tab(dcc.Graph(figure=GraphBuilder().learning_curve_linear()), label="Linear Model"),
+                dbc.Tab(dcc.Graph(figure=GraphBuilder().learning_curve_tree()), label="Decision Tree"),
+                dbc.Tab(dcc.Graph(figure=GraphBuilder().learning_curve_forest()), label="Random Forest"),
+                dbc.Tab(dcc.Graph(figure=GraphBuilder().learning_curve_gradient()), label="Gradient Boosting")
+            ])
+        ])
+
+    elif triggered == "link-fi":
+        return html.Div([
+            html.H5("Feature Importance & Performance Analysis", className="text-center mb-4"),
+            dbc.Tabs([
+                dbc.Tab([
+                    dcc.Graph(figure=GraphBuilder().feature_importance("linear")),
+                    dcc.Graph(figure=GraphBuilder().scatter_plot("linear")),
+                    dcc.Graph(figure=GraphBuilder().residual_plot())
+                ], label="Linear"),
+                dbc.Tab([
+                    dcc.Graph(figure=GraphBuilder().feature_importance("tree")),
+                    dcc.Graph(figure=GraphBuilder().scatter_plot("tree")),
+                    dcc.Graph(figure=GraphBuilder().residual_tree_plot("tree")[1])
+                ], label="Decision Tree"),
+                dbc.Tab([
+                    dcc.Graph(figure=GraphBuilder().feature_importance("forest")),
+                    dcc.Graph(figure=GraphBuilder().scatter_plot("forest")),
+                    dcc.Graph(figure=GraphBuilder().residual_tree_plot("forest")[1])
+                ], label="Random Forest"),
+                dbc.Tab([
+                    dcc.Graph(figure=GraphBuilder().feature_importance("gradient")),
+                    dcc.Graph(figure=GraphBuilder().scatter_plot("gradient")),
+                    dcc.Graph(figure=GraphBuilder().residual_tree_plot("gradient")[1])
+                ], label="Gradient Boosting")
+            ])
+        ])
+
+    elif triggered == "link-about":
+        return html.Div([
+            html.H4("🏗️ About This Project", className="text-center"),
+            html.Hr(),
+            html.P(
+                "This web application was developed as part of the "
+                "Kaggle competition: 'House Prices - Advanced Regression Techniques'.",
+                className="lead text-center"
+            ),
+            html.P(
+                "The competition challenges participants to predict house sale prices "
+                "based on various housing features such as quality, location, year built, and more.",
+                className="text-center"
+            ),
+            html.P(
+                "This app demonstrates an end-to-end data science workflow: "
+                "data preprocessing, feature engineering, model training (Linear, Decision Tree, Random Forest, Gradient Boosting), "
+                "and model evaluation using learning curves, feature importances, scatter plots, and residual distributions.",
+                className="text-center"
+            ),
+            html.P(
+                [
+                    "🔗 View the original competition here: ",
+                    html.A("Kaggle Competition Link",
+                           href="https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques",
+                           target="_blank", style={"fontWeight": "bold", "textDecoration": "underline"})
+                ],
+                className="text-center"
+            ),
+            html.P(
+                [
+                    "🔗 View the GitHub project source code: ",
+                    html.A("GitHub Repository",
+                           href="https://github.com/evansnjagi/Amos-App",
+                           target="_blank", style={"fontWeight": "bold", "textDecoration": "underline"})
+                ],
+                className="text-center"
+            ),
+            html.P("The user interface is fully responsive and designed for mobile and desktop viewing.",
+                   className="text-center")
+        ])
+
+    return html.Div("Select a tab to view its content.")
+
+# Handle submission download
 @app.callback(
-    Output("download-link", "data"),
-    Input("download-btn", "n_clicks"),
-    State("label-input", "value"),
-    prevent_initial_call=True
+    Output("download-component", "data"),
+    [Input("download-button", "n_clicks")]
 )
-def download_csv(n_clicks, label):
-    if label in predicted_submissions:
-        df = predicted_submissions[label]
-        return dcc.send_data_frame(df.to_csv, f"{label}_submission.csv")
-    return dash.no_update
+def download_submission(n):
+    if not n:
+        raise PreventUpdate
+    df = MapId().get_id("linear")
+    return dcc.send_data_frame(df.to_csv, filename="submission.csv")
 
 if __name__ == "__main__":
     app.run_server(debug=True)
