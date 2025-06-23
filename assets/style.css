@@ -1,63 +1,104 @@
-/* Sidebar */
-.side-bar {
-    width: 220px;
+/* General reset and font */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
     background-color: #f8f9fa;
-    padding: 20px;
+}
+
+/* Sidebar base */
+.side-bar {
     position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
+    width: 230px;
+    height: 100%;
+    background-color: #343a40;
+    padding: 15px;
     overflow-y: auto;
+    transition: all 0.3s ease;
     z-index: 1000;
-    transition: transform 0.3s ease-in-out;
+    color: #fff;
 }
 
+/* Sidebar active state (slide in/out) */
 .side-bar.active {
-    transform: translateX(-100%);
+    transform: translateX(-230px);
 }
 
-/* Main content shifts right when sidebar is open */
-@media (min-width: 768px) {
-    #main-content {
-        margin-left: 240px;
-    }
-}
-
-/* Button */
+/* Toggle button (hamburger) */
 .button {
-    margin: 15px;
-    padding: 10px 20px;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 14px;
     font-size: 16px;
-    background-color: #0d6efd;
-    color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 1100;
+    transition: background-color 0.3s;
 }
 
-/* Mobile adjustments */
-@media (max-width: 767px) {
+.button:hover {
+    background-color: #0056b3;
+}
+
+/* Main content section */
+.main-content {
+    margin-left: 230px;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
+
+.side-bar.active + .main-content {
+    margin-left: 0;
+}
+
+/* Input and buttons inside sidebar */
+.side-bar input,
+.side-bar button {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
     .side-bar {
-        position: absolute;
         width: 100%;
         height: auto;
+        position: relative;
+        transform: translateX(0);
     }
 
-    .button {
-        width: 100%;
-    }
-
-    #main-content {
+    .main-content {
         margin-left: 0;
         padding: 10px;
     }
+
+    .button {
+        top: 5px;
+        left: 5px;
+        padding: 8px 12px;
+    }
 }
 
-/* Tab styling */
-.tab-content {
-    margin-top: 20px;
+/* Graph container for responsiveness */
+#plots-container {
+    max-width: 100%;
+    overflow-x: auto;
 }
 
-/* Text alignment */
-.text-center {
-    text-align: center;
+/* Tabs customization */
+.nav-tabs .nav-link {
+    color: #007bff;
+}
+.nav-tabs .nav-link.active {
+    background-color: #007bff;
+    color: #fff;
+}
+
+/* Toasts, download messages, etc. */
+.text-success {
+    color: #28a745;
 }
