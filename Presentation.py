@@ -7,6 +7,7 @@ from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error,
 
 # building the app
 app = dash.Dash(__name__)
+server = app.server
 
 app.layout = html.Div([
     # Sidebar
